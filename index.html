@@ -625,15 +625,17 @@ function drawSeam(){
   lg.addColorStop(1,'rgba(143,208,220,0)');
   ctx.fillStyle=lg;
   ctx.fillRect(0, y0+hh/2-0.5, SW, 1);
-  // 两端折痕记号
+  // 折痕记号：上界标在中线之上、下界标在中线之下，用位置本身说明上下关系
+  var mid = y0+hh/2;
   ctx.save();
-  ctx.fillStyle='rgba(160,176,192,.46)';
   ctx.font='8.5px -apple-system,"PingFang SC",sans-serif';
-  ctx.textAlign='left'; ctx.textBaseline='middle';
-  ctx.fillText('上界', 12, y0+hh/2);
-  ctx.textAlign='right';
-  if(G.flip){ ctx.fillStyle='rgba(143,208,220,.85)'; ctx.fillText('下界 ⇄ 反向', SW-12, y0+hh/2); }
-  else ctx.fillText('下界', SW-12, y0+hh/2);
+  ctx.textAlign='left';
+  ctx.textBaseline='alphabetic';
+  ctx.fillStyle='rgba(232,168,92,.52)';
+  ctx.fillText('上界', 12, mid-7);
+  ctx.textBaseline='top';
+  if(G.flip){ ctx.fillStyle='rgba(143,208,220,.9)'; ctx.fillText('下界 ⇄ 反向', 12, mid+7); }
+  else { ctx.fillStyle='rgba(143,208,220,.52)'; ctx.fillText('下界', 12, mid+7); }
   ctx.restore();
 }
 
