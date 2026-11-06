@@ -272,8 +272,41 @@ def main():
             print('        ' + pa + '      ' + pb)
         print()
 
+    audit(out)
     json.dump(out, open('tools/levels.json', 'w'), ensure_ascii=False, indent=0)
     print('total', len(out), 'pars', [o['par'] for o in out])
+
+
+def audit(levels):
+    """写盘前自检：任何一条不成立就直接抛错，不让坏数据进 levels.json。"""
+    bad = []
+    for i, lv in enumerate(levels, 1):
+        ga, gb = parse(lv['a']), parse(lv['b'])
+        # 1) 起点与出口必须是地面：压墙走不进去，压渊永远踩空
+        for g, tag, pts in ((ga, 'A', (lv['sa'], lv['ea'])), (gb, 'B', (lv['sb'], lv['eb']))):
+            for name, (x, y) in zip(('起点', '出口'), pts):
+                if g[y][x] != FLOOR:
+                    bad.append('L%d %s %s 落在 %s 上' % (i, tag, name, CH[g[y][x]]))
+        # 2) 出口不能与起点重合：否则该角色零步通关，这一界等于摆设
+        if tuple(lv['sa']) == tuple(lv['ea']):
+            bad.append('L%d 上界出口与起点重合' % i)
+        if tuple(lv['sb']) == tuple(lv['eb']):
+            bad.append('L%d 下界出口与起点重合' % i)
+        # 3) 标准解必须真能走通，且最后一格正好落在两个出口上
+        a, b, n = replay(ga, gb, tuple(lv['sa']), tuple(lv['sb']), lv['path'], lv['flip'])
+        if a is None:
+            bad.append('L%d 标准解踩空作废' % i)
+        else:
+            if tuple(a) != tuple(lv['ea']) or tuple(b) != tuple(lv['eb']):
+                bad.append('L%d 标准解终点 %s/%s 与出口不符' % (i, a, b))
+            if n != lv['par']:
+                bad.append('L%d 步数 %d != par %d' % (i, n, lv['par']))
+        # 4) 前 14 关不应出现反向，否则难度曲线断层
+        if lv['flip'] and i < 15:
+            bad.append('L%d 过早开启反向' % i)
+    if bad:
+        raise SystemExit('自检失败:\n  ' + '\n  '.join(bad))
+    print('自检通过：%d 关，起点/出口合法、标准解可走通、步数=par、反向曲线正常' % len(levels))
 
 
 if __name__ == '__main__':
